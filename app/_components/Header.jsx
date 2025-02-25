@@ -55,13 +55,13 @@ function Header() {
                     const categoryName = category?.attributes?.name || "Unknown";
 
                     return (
-                      <DropdownMenuItem key={index} className="flex items-center gap-2">
+                      <DropdownMenuItem key={index} className="flex items-center gap-2 cursor-pointer">
                         {iconUrl ? (
-                          <Image src={iconUrl} alt="icon" width={23} height={23} />
+                          <Image src={iconUrl} alt="icon" width={30} height={27} />
                         ) : (
                           <span>🖼️</span> // Placeholder if no image
                         )}
-                        <h2>{categoryName}</h2>
+                        <h2 className='text-lg'>{categoryName}</h2>
                       </DropdownMenuItem>
                     );
                   })
