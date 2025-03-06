@@ -1,37 +1,44 @@
-import React from 'react';
-import Image from 'next/image';
+"use client";
+import GlobalApi from '@/app/_Utils/GlobalApi'; 
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
 
 function CategoryList({ categoryList }) {
   return (
-    <div className="mt-5">
-      <h2 className="text-green-600 font-bold text-2xl mb-4 text-center">Shop by Category</h2>
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-5 mt-2">
+    <div className="mt-5 w-full">
+      <h2 className="text-green-600 font-bold text-2xl mb-4 text-left">
+        Shop by Category
+      </h2>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-5 mt-6">
         {categoryList.map((category) => {
-          const iconUrl = category?.attributes?.icon?.[0]?.url 
+          const iconUrl = category?.attributes?.icon?.[0]?.url
             ? `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}${category.attributes.icon[0].url}`
             : null;
+          const categorySlug = category.attributes.name.toLowerCase().replace(/\s+/g, "-");
 
           return (
-            <div 
-              key={category.id} 
-              className="flex flex-col items-center bg-green-50 p-2 rounded-lg transition-all duration-300 hover:bg-green-100 active:bg-green-200"
-            >
-              {iconUrl ? (
-                <Image
-                  src={iconUrl}
-                  width={50}
-                  height={50}
-                  alt={category.attributes.name}
-                  className="rounded-full transition-transform duration-300 hover:scale-110 active:scale-125"
-                />
-              ) : (
-                <div className="w-[50px] h-[50px] bg-gray-200 rounded-full flex items-center justify-center">
-                  No Image
-                </div>
-              )}
-              {/* Category name below the icon */}
-              <p className="text-lg font-semibold mt-2">{category.attributes.name}</p>
-            </div>
+            <Link key={category.id} href={`/products-category/`+categorySlug} passHref>
+              <div className="flex flex-col items-center bg-green-50 gap-2 p-4 rounded-lg group cursor-pointer transition-transform hover:scale-105">
+                {iconUrl ? (
+                  <Image
+                    src={iconUrl}
+                    width={80}
+                    height={80}
+                    alt={category.attributes.name}
+                    className="group-hover:scale-110 transition-all"
+                  />
+                ) : (
+                  <div className="w-[80px] h-[80px] bg-gray-200 rounded-full flex items-center justify-center">
+                    No Image
+                  </div>
+                )}
+                <p className="text-lg font-semibold mt-2 text-center">
+                  {category.attributes.name}
+                </p>
+              </div>
+            </Link>
           );
         })}
       </div>
