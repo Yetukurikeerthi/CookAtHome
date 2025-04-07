@@ -14,9 +14,9 @@ function ProductItem({ product }) {
   return (
     <div className="p-2 md:p-6 flex flex-col items-center justify-center gap-3 border rounded-lg hover:scale-105 hover:shadow-md transition-all ease-in-out">
       {/* Product Image */}
-      {product.images?.length > 0 && (
+      {product.image?.length > 0 && (
         <Image
-          src={`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}${product.images[0].url}`}
+          src={`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}${product.image[0].url}`}
           alt={product.name}
           width={200}
           height={200}

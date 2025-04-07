@@ -1,17 +1,65 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { ShoppingCart } from "lucide-react"; // Import cart icon
+import { ShoppingCart } from "lucide-react";
+import { useRouter } from "next/navigation"; // ✅ Correct import for App Router
+import GlobalApi from "../_Utils/GlobalApi";
+import { toast } from "sonner";
 
 function ProductItemDetail({ product }) {
+  const router = useRouter();
   const [quantity, setQuantity] = useState(1);
-  const maxQuantity = 50; // Set maximum quantity limit
+  const maxQuantity = 50;
 
-  // Calculate total price dynamically
+  const [user, setUser] = useState(null);
+  const [jwt, setJwt] = useState(null);
+
+  useEffect(() => {
+    try {
+      const jwtToken = sessionStorage.getItem("jwt");
+      const userData = sessionStorage.getItem("user");
+
+      if (jwtToken && userData) {
+        setJwt(jwtToken);
+        setUser(JSON.parse(userData));
+      }
+    } catch (error) {
+      console.error("Error parsing session data:", error);
+    }
+  }, []);
+
   const totalPrice = product.SellingPrice
     ? product.SellingPrice * quantity
     : product.mrp * quantity;
+
+  const addToCart = () => {
+    if (!jwt || !user) {
+      router.push("/sign-in");
+      return;
+    }
+
+    const data = {
+      data:{
+      quantity: quantity,
+      amount: totalPrice.toFixed(2),
+      products: product.id, // 🛒 make sure it's an array (many-to-many)
+      users_permissions_users: user.id, 
+      }// 🧑 also an array
+    };
+
+    console.log("Sending Data to API:", data);
+
+    GlobalApi.addToCart(data, jwt)
+      .then((resp) => {
+        console.log("API Response:", resp);
+        toast.success("Added to cart");
+      })
+      .catch((error) => {
+        console.error("API Error:", error);
+        toast.error("Error while adding to cart");
+      });
+  };
 
   const increaseQuantity = () => {
     if (quantity < maxQuantity) setQuantity((prev) => prev + 1);
@@ -22,20 +70,18 @@ function ProductItemDetail({ product }) {
   };
 
   const handleAddToCart = () => {
-    if (quantity > 1) {
-      alert(`Added ${quantity} ${product.name} to cart!`);
-      // Replace with actual add-to-cart logic
-    }
+    if (quantity < 1) return;
+    addToCart();
   };
 
-  if (!product?.images?.length) {
+  if (!product?.image?.length) {
     return <p>No image available</p>;
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 p-7 bg-white text-black">
       <Image
-        src={`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}${product.images[0].url}`}
+        src={`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}${product.image[0].url}`}
         alt={product.name || "Product Image"}
         width={300}
         height={300}
@@ -46,7 +92,6 @@ function ProductItemDetail({ product }) {
         <h2 className="text-2xl font-bold">{product.name}</h2>
         <h2 className="text-sm text-gray-500">{product.description}</h2>
 
-        {/* Price & Total Price Section */}
         <div className="flex gap-3 items-center">
           {product.SellingPrice ? (
             <>
@@ -58,13 +103,10 @@ function ProductItemDetail({ product }) {
               )}
             </>
           ) : (
-            product.mrp && (
-              <h2 className="text-gray-800 text-lg">${product.mrp}</h2>
-            )
+            product.mrp && <h2 className="text-gray-800 text-lg">${product.mrp}</h2>
           )}
         </div>
 
-        {/* Quantity Selection */}
         <div>
           <h2 className="font-medium text-lg">
             Quantity ({product.itemQuantityType})
@@ -96,17 +138,15 @@ function ProductItemDetail({ product }) {
           </div>
         </div>
 
-        {/* Total Price Display */}
         <h2 className="text-lg font-bold text-blue-600">
           Total: ${totalPrice.toFixed(2)}
         </h2>
 
-        {/* Add to Cart Button - Disabled if quantity is 1 */}
         <button
           onClick={handleAddToCart}
-          disabled={quantity === 1}
+          disabled={quantity < 1}
           className={`mt-4 px-5 py-2 font-semibold rounded-md flex items-center gap-2 transition duration-300 ${
-            quantity > 1
+            quantity >= 1
               ? "bg-green-400 text-white hover:bg-green-700"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}

@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { LayoutGrid, Search, ShoppingBag } from "lucide-react";
+import { CircleUserRound, LayoutGrid, Search, ShoppingBag, ShoppingBasket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,22 +12,43 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import GlobalApi from "../_Utils/GlobalApi";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 function Header() {
   const [CategoryList, setCategoryList] = useState([]);
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL; // ✅ Correct Placement
+  const [isLogin, setIsLogin] = useState(false);
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+  const [totalCartItem,setTotalCartItem]=useState(0)
+  const router = useRouter();
 
   useEffect(() => {
     getCategory();
+
+    // Ensure sessionStorage is only accessed on the client-side
+    if (typeof window !== "undefined") {
+      setIsLogin(!!sessionStorage.getItem("jwt"));
+    }
   }, []);
 
   const getCategory = async () => {
     try {
       const resp = await GlobalApi.getCategory();
-      setCategoryList(resp.data.data);
+      if (resp?.data?.data) {
+        setCategoryList(resp.data.data);
+      } else {
+        console.warn("Received empty category list");
+        setCategoryList([]);
+      }
     } catch (err) {
       console.error("Error fetching categories:", err);
+      setCategoryList([]);
     }
+  };
+
+  const onSignOut = () => {
+    sessionStorage.clear();
+    router.push("/sign-in");
   };
 
   return (
@@ -50,9 +71,9 @@ function Header() {
                 <DropdownMenuSeparator />
                 {CategoryList.length > 0 ? (
                   CategoryList.map((category, index) => {
-                    const iconData = category?.attributes?.icon?.[0];
+                    const iconData = category?.icon?.[0];
                     const iconUrl = iconData?.url ? `${backendUrl}${iconData.url}` : null;
-                    const categoryName = category?.attributes?.name || "Unknown";
+                    const categoryName = category?.name || "Unknown";
 
                     return (
                       <DropdownMenuItem key={index} className="flex items-center gap-2 cursor-pointer">
@@ -61,7 +82,7 @@ function Header() {
                         ) : (
                           <span>🖼️</span> // Placeholder if no image
                         )}
-                        <h2 className='text-lg'>{categoryName}</h2>
+                        <h2 className="text-lg">{categoryName}</h2>
                       </DropdownMenuItem>
                     );
                   })
@@ -82,10 +103,27 @@ function Header() {
         {/* Right Section - Shopping Bag & Login Button */}
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-2 text-lg cursor-pointer">
-            <ShoppingBag className="h-6 w-6" />
-            <span>0</span>
+            <ShoppingBasket className="h-7 w-7" />
+            <span className="bg-primary text-white | px-2 rounded-full">{}</span>
           </div>
-          <Button>Login</Button>
+          {!isLogin ? (
+            <Link href={"/sign-in"}>
+              <Button>Login</Button>
+            </Link>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <CircleUserRound className="bg-green-100 p-2 rounded-full cursor-pointer text-primary h-12 w-12" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>My Orders</DropdownMenuItem>
+                <DropdownMenuItem onClick={onSignOut}>Log Out</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
     </div>

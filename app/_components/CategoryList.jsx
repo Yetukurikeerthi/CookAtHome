@@ -13,10 +13,10 @@ function CategoryList({ categoryList }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-5 mt-6">
         {categoryList.map((category) => {
-          const iconUrl = category?.attributes?.icon?.[0]?.url
-            ? `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}${category.attributes.icon[0].url}`
+          const iconUrl = category?.icon?.[0]?.url
+            ? `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}${category.icon[0].url}`
             : null;
-          const categorySlug = category.attributes.name.toLowerCase().replace(/\s+/g, "-");
+          const categorySlug = category.name.toLowerCase().replace(/\s+/g, "-");
 
           return (
             <Link key={category.id} href={`/products-category/`+categorySlug} passHref>
@@ -26,7 +26,7 @@ function CategoryList({ categoryList }) {
                     src={iconUrl}
                     width={80}
                     height={80}
-                    alt={category.attributes.name}
+                    alt={category.name}
                     className="group-hover:scale-110 transition-all"
                   />
                 ) : (
@@ -35,7 +35,7 @@ function CategoryList({ categoryList }) {
                   </div>
                 )}
                 <p className="text-lg font-semibold mt-2 text-center">
-                  {category.attributes.name}
+                  {category.name}
                 </p>
               </div>
             </Link>
