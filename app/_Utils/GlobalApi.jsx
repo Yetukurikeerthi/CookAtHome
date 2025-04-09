@@ -1,7 +1,7 @@
 const { default: axios } = require('axios');
 
 const axiosClient = axios.create({
-  baseURL: 'http://192.168.1.155:1337/api',
+  baseURL: 'http://192.168.1.155:1337/api',  // Base URL of your API
 });
 
 // Fetch categories with populated fields
@@ -38,19 +38,57 @@ const SignIn = (email, password) =>
     identifier: email, // 'identifier' is typically used for the email
     password: password
   });
-  const addToCart = (data, jwt) => 
-    axiosClient.post('/user-carts', data, { 
-      headers: {  // Corrected typo here
-        Authorization: `Bearer ${jwt}`, // Added a space after Bearer
-      },
+
+// Add a product to the cart
+const addToCart = (data, jwt) => 
+  axiosClient.post('/user-carts', data, { 
+    headers: {  
+      Authorization: `Bearer ${jwt}`, // Added a space after Bearer
+    },
+  });
+
+// Get cart items for a user
+const getCartItems = (userId, jwt) => 
+  axiosClient.get(`/user-carts?filters[userId][$eq]=${userId}&populate[products][populate]=image`, {
+    headers: {
+      Authorization: `Bearer ${jwt}`,
+    },
+  })
+  .then(resp => {
+    const data = resp.data.data;
+    // Map through each cart item and extract relevant details
+    const cartItemList = data.map((item, index) => {
+      const product = item.products[0];  // Since each item has one product in this case
+      const imageUrl = product.image[0]?.url; // Get the product image URL (if available)
+
+      return {
+        cartId: item.id,
+        quantity: item.quantity,
+        amount: item.amount,
+        productId: product.id,
+        productName: product.name,
+        productDescription: product.description,
+        productPrice: product.SellingPrice,
+        productImage: imageUrl ? `http://192.168.1.155:1337${imageUrl}` : null, // Full URL for the image
+      };
     });
-    const getCartItems = (userId, jwt) => 
-      axiosClient.get(`/user-carts?filters[userId][$eq]=${userId}&populate=*`, {
-        headers: {
-          Authorization: `Bearer ${jwt}`,
-        },
-      }).then(resp => resp.data.data);  // Ensure you return the correct response data
-    
+
+    return cartItemList; // Return the mapped data
+  })
+  .catch(error => {
+    console.error('Error fetching cart items:', error);
+    throw error; // Optionally throw the error to handle it outside this function
+  });
+
+// Delete a cart item
+const deleteCartItem = (id, jwt) => {
+  console.log("Deleting cart item with id:", id); // Log the id to verify it's correct
+  return axiosClient.delete(`/user-carts/${id}`, {
+    headers: {
+      Authorization: `Bearer ${jwt}`, // Ensure the Authorization header is correct
+    }
+  });
+};
 
 export default {
   getCategory,
@@ -61,5 +99,6 @@ export default {
   registration,
   SignIn,
   addToCart,
-  getCartItems, // Export the login function
+  getCartItems,
+  deleteCartItem
 };
