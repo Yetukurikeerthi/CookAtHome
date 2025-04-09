@@ -4,7 +4,8 @@ import "./globals.css";
 import Header from "./_components/Header";
 import { Toaster } from "@/components/ui/sonner";
 import { usePathname } from "next/navigation";
-import {Outfit} from "next/font/google";
+import { UpdateCartContext } from "./_context/UpdateCartContext";
+import { useState } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,18 +17,19 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-
-
 export default function RootLayout({ children }) {
-  const params = usePathname(); // ✅ Corrected variable name
-  const showHeader = params === "/sign-in"|| params === "/create-account"?false:true; // ✅ Corrected condition
+  const params = usePathname();
+  const showHeader = params !== "/sign-in" && params !== "/create-account";
+  const [updateCart, setUpdateCart] = useState(false);
 
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {showHeader && <Header />} {/* ✅ Header is now conditionally rendered correctly */}
-        {children}
-        <Toaster />
+        <UpdateCartContext.Provider value={{ updateCart, setUpdateCart }}>
+          {showHeader && <Header />}
+          {children}
+          <Toaster />
+        </UpdateCartContext.Provider>
       </body>
     </html>
   );

@@ -1,19 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect ,useContext } from "react";
 import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation"; // ✅ Correct import for App Router
 import GlobalApi from "../_Utils/GlobalApi";
 import { toast } from "sonner";
+import { LoaderIcon } from "lucide-react"; // Import the loader icon
+import { UpdateCartContext } from "../_context/UpdateCartContext";
 
 function ProductItemDetail({ product }) {
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const maxQuantity = 50;
-
+   const {updateCart,setUpdateCart}=useContext(UpdateCartContext)
   const [user, setUser] = useState(null);
   const [jwt, setJwt] = useState(null);
+  const [loading, setLoading] = useState(false); // State for loading
 
   useEffect(() => {
     try {
@@ -40,24 +43,29 @@ function ProductItemDetail({ product }) {
     }
 
     const data = {
-      data:{
-      quantity: quantity,
-      amount: totalPrice.toFixed(2),
-      products: product.id, // 🛒 make sure it's an array (many-to-many)
-      users_permissions_users: user.id, 
-      }// 🧑 also an array
+      data: {
+        quantity: quantity,
+        amount: totalPrice.toFixed(2),
+        products: product.id, // 🛒 make sure it's an array (many-to-many)
+        users_permissions_users: user.id, // 🧑 a
+        userId:user.id
+      },
     };
 
-    console.log("Sending Data to API:", data);
+    setLoading(true); // Start loading
 
     GlobalApi.addToCart(data, jwt)
       .then((resp) => {
         console.log("API Response:", resp);
         toast.success("Added to cart");
+        setUpdateCart(!updateCart);
       })
       .catch((error) => {
         console.error("API Error:", error);
         toast.error("Error while adding to cart");
+      })
+      .finally(() => {
+        setLoading(false); // Stop loading
       });
   };
 
@@ -144,14 +152,19 @@ function ProductItemDetail({ product }) {
 
         <button
           onClick={handleAddToCart}
-          disabled={quantity < 1}
+          disabled={quantity < 1 || loading} // Disable when loading
           className={`mt-4 px-5 py-2 font-semibold rounded-md flex items-center gap-2 transition duration-300 ${
-            quantity >= 1
+            quantity >= 1 && !loading
               ? "bg-green-400 text-white hover:bg-green-700"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
-          <ShoppingCart size={20} /> Add to Cart
+          {loading ? (
+            <LoaderIcon className="animate-spin" size={20} />
+          ) : (
+            <ShoppingCart size={20} />
+          )}
+          {loading ? "Adding..." : "Add to Cart"}
         </button>
       </div>
     </div>

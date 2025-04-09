@@ -44,6 +44,13 @@ const SignIn = (email, password) =>
         Authorization: `Bearer ${jwt}`, // Added a space after Bearer
       },
     });
+    const getCartItems = (userId, jwt) => 
+      axiosClient.get(`/user-carts?filters[userId][$eq]=${userId}&populate=*`, {
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+        },
+      }).then(resp => resp.data.data);  // Ensure you return the correct response data
+    
 
 export default {
   getCategory,
@@ -53,5 +60,6 @@ export default {
   getProductByCategory,
   registration,
   SignIn,
-  addToCart, // Export the login function
+  addToCart,
+  getCartItems, // Export the login function
 };
