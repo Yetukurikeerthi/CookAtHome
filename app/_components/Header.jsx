@@ -1,15 +1,17 @@
+"use client"
 import { Button } from '@/components/ui/button';
 import { CircleUserRound, LayoutGrid, Search, ShoppingBasket } from 'lucide-react';
 import Image from 'next/image';
 import React, { useContext, useEffect, useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import GlobalApi from '../_utils/GlobalApi';
+import GlobalApi from '../_Utils/GlobalApi';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { UpdateCartContext } from '../_context/UpdateCartContext';
-import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetDescription,SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import CartItemList from './CartItemList';
 import { toast } from 'sonner';
+
 
 function Header() {
     const [categoryList, setCategoryList] = useState([]);
@@ -28,41 +30,56 @@ function Header() {
     useEffect(() => {
         getCartItems();
     }, [updateCart]);
+    const getCategoryList=()=>{
+        GlobalApi.getCategory().then(resp=>{
+            setCategoryList(resp.data.data);
+        })
+    }
 
-    const getCategoryList = async () => {
-        try {
-            const resp = await GlobalApi.getCategory();
-            setCategoryList(resp.data.data); // Update category list
-        } catch (error) {
-            console.error("Error fetching categories:", error);
-        }
-    };
 
+   
     const getCartItems = async () => {
-        if (!user || !jwt) return;
-        try {
-            const cartItemsList_ = await GlobalApi.getCartItems(user.id, jwt);
-            setTotalCartItem(cartItemsList_?.length || 0);
-            setCartItemList(cartItemsList_);
-        } catch (error) {
+        if (user && user.id) {
+          try {
+            const cartItemList_ = await GlobalApi.getCartItems(user.id, jwt);
+            console.log(cartItemList_);
+            setTotalCartItem(cartItemList_?.length);
+            setCartItemList(cartItemList_);
+          } catch (error) {
             console.error("Error fetching cart items:", error);
+          }
+        } else {
+          console.error("User is not logged in or user ID is missing");
         }
-    };
+      };
+      
+    
+
 
     const onSignOut = () => {
         sessionStorage.clear();
         router.push('/sign-in');
     };
 
+  
     const onDeleteItem = (id) => {
-        GlobalApi.deleteCartItem(id, jwt).then(() => {
-            toast('Item removed!');
-            getCartItems(); // Update cart after deletion
-        }).catch((error) => {
-            toast.error("Error removing item.");
-            console.error(error);
+        GlobalApi.deleteCartItem(id, jwt).then(resp => {
+          toast('Item removed!');
+        }).catch(error => {
+          toast.error('Failed to remove item');
+          console.error(error);
         });
-    };
+      }
+
+    const [subtotal, setSubTotal] = useState(0);
+
+    useEffect(() => {
+        let total = 0;
+        cartItemList.forEach(element => {
+            total = total + element.amount;
+        });
+        setSubTotal(total.toFixed(2));
+    }, [cartItemList]);
 
     return (
         <div className='p-5 shadow-sm flex justify-between'>
@@ -85,7 +102,9 @@ function Header() {
                             <DropdownMenuItem>Loading categories...</DropdownMenuItem>
                         ) : (
                             categoryList.map((category, index) => {
-                                const iconUrl = category?.icon?.[0]?.url ? `${category.icon[0].url}` : null;
+                                const iconUrl = category?.icon?.[0]?.url
+                                    ? `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}${category.icon[0].url}`
+                                    : null;
                                 const categoryName = category?.name || "Unknown";
                                 return (
                                     <DropdownMenuItem key={index} className="flex items-center gap-2 cursor-pointer">
@@ -121,40 +140,51 @@ function Header() {
                         <SheetHeader>
                             <SheetTitle className="bg-primary text-white font-bold text-lg p-2">My Cart</SheetTitle>
                             <SheetDescription>
-                                <CartItemList cartItemList={cartItemList} onDeleteItem={onDeleteItem} />
+                            <CartItemList cartItemList={cartItemList} 
+                   onDeleteItem={onDeleteItem}/>
                             </SheetDescription>
                         </SheetHeader>
                         <SheetClose asChild>
                             <div className='absolute w-[90%] bottom-6 flex flex-col'>
-                                <Button disabled={cartItemList.length === 0} onClick={() => router.push(jwt ? '/checkout' : '/sign-in')}>Checkout</Button>
-                            </div>
-                        </SheetClose>
-                    </SheetContent>
-                </Sheet>
+                                <h2 className='text-lg font-bold flex justify-between'>
+                                    Subtotal <span>${subtotal}</span>
+                                </h2>
+                                <Button 
+                    disabled={cartItemList.length==0}
+                    onClick={()=>router.push(jwt?'/checkout':'/sign-in')}>Checkout</Button>
+</div>
+                </SheetClose>
+            </SheetContent>
+            </Sheet>
 
-                {!isLogin ? (
-                    <Link href={'/sign-in'}>
-                        <Button>Login</Button>
-                    </Link>
-                ) : (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <CircleUserRound className="bg-green-100 p-2 rounded-full cursor-pointer text-primary h-12 w-12" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>Profile</DropdownMenuItem>
-                            <Link href={'/my-order'}>
-                                <DropdownMenuItem>My Orders</DropdownMenuItem>
-                            </Link>
-                            <DropdownMenuItem onClick={onSignOut}>Logout</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
-            </div>
+            {!isLogin?  <Link href={'/sign-in'}>
+                <Button>Login</Button>
+            </Link>
+            :
+            <DropdownMenu>
+  <DropdownMenuTrigger asChild>
+  <CircleUserRound 
+            className="bg-green-100
+            p-2 rounded-full cursor-pointer
+             text-primary h-12 w-12"
+            />   
+  </DropdownMenuTrigger>
+  <DropdownMenuContent>
+    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+    <DropdownMenuSeparator />
+    <DropdownMenuItem>Profile</DropdownMenuItem>
+   <Link href={'/my-order'}>
+     <DropdownMenuItem>My Order</DropdownMenuItem>
+     </Link>
+   
+    <DropdownMenuItem onClick={()=>onSignOut()}>Logout</DropdownMenuItem>
+  </DropdownMenuContent>
+</DropdownMenu>
+ 
+        }
         </div>
-    );
+    </div>
+  )
 }
 
-export default Header;
+export default Header

@@ -1,5 +1,5 @@
 "use client"
-import GlobalApi from '@/app/_utils/GlobalApi'
+import GlobalApi from '@/app/_Utils/GlobalApi'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LoaderIcon } from 'lucide-react'

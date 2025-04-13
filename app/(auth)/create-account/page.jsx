@@ -49,7 +49,8 @@ function CreateAccount() {
 
   return (
     <div className="flex flex-col items-center my-20 p-10 bg-slate-100 border border-gray-300 rounded-lg shadow-md max-w-md mx-auto">
-      <Image src="/logo.png" width={200} height={200} alt="Logo" />
+     <Image src="/logo.png" alt="Logo" width={200} height={100} priority />
+
       <h2 className="font-bold text-3xl mb-2">Create an Account</h2>
       <p className="text-gray-600 text-center mb-4">
         Enter your Username, Email, and Password to continue

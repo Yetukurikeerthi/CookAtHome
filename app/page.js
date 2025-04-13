@@ -4,7 +4,7 @@ import Slider from "./_components/Slider";
 import GlobalApi from "./_Utils/GlobalApi";
 import CategoryList from "./_components/CategoryList";
 import ProductList from "./_components/ProductList";
-import Footer from "@/components/ui/Footer";
+import Footer from "@/app/_components/Footer";
 export default async function Home() {
   const sliderList=await GlobalApi.getSliders();
   const categoryList=await GlobalApi.getCategoryList();

@@ -65,11 +65,12 @@ const getCartItems = (userId, jwt) =>
         cartId: item.id,
         quantity: item.quantity,
         amount: item.amount,
-        productId: product.id,
         productName: product.name,
         productDescription: product.description,
         productPrice: product.SellingPrice,
         productImage: imageUrl ? `http://192.168.1.155:1337${imageUrl}` : null, // Full URL for the image
+        product: item.id,
+        
       };
     });
 
@@ -80,15 +81,40 @@ const getCartItems = (userId, jwt) =>
     throw error; // Optionally throw the error to handle it outside this function
   });
 
-// Delete a cart item
-const deleteCartItem = (id, jwt) => {
-  console.log("Deleting cart item with id:", id); // Log the id to verify it's correct
-  return axiosClient.delete(`/user-carts/${id}`, {
-    headers: {
-      Authorization: `Bearer ${jwt}`, // Ensure the Authorization header is correct
-    }
-  });
-};
+  const deleteCartItem = (cartId, jwt) => 
+    axiosClient.delete('/user-carts/' + cartId, {
+      headers: {
+        Authorization: 'Bearer ' + jwt
+      }
+    })
+    const createOrder = (data, jwt) =>
+      axiosClient.post('/orders', data, {
+        headers: {
+          Authorization: 'Bearer ' + jwt
+        }
+      });
+    
+      const getMyOrder = (userId, jwt) =>
+        axiosClient
+          .get(
+            `/orders?filters[userId][$eq]=${userId}&populate[orderItemList][populate][product][populate]=image`
+          )
+          .then((resp) => {
+            const response = resp.data.data;
+            const orderList = response.map((item) => ({
+              id: item.id,
+              totalOrderAmount: item.totalOrderAmount,
+              paymentId: item.paymentId,
+              orderItemList: item.orderItemList,
+              //createdAt: moment(item.createdAt).format('DD/MMM/YYYY'), // Format the date
+              status: item.Statuss,
+            }));
+            
+      
+            return orderList;
+          })
+        
+      
 
 export default {
   getCategory,
@@ -100,5 +126,7 @@ export default {
   SignIn,
   addToCart,
   getCartItems,
-  deleteCartItem
+  deleteCartItem,
+  createOrder,
+  getMyOrder,
 };
